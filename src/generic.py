@@ -79,6 +79,7 @@ class GenericParser:
                         logger.info('Packed File {} mime {}'.format(self.file_path, magic_mime))
 		elif magic_mime in self.mime_executable['.exe'][0]:
                         logger.info('Executable File {} mime {}'.format(self.file_path, magic_mime))
+			logger.info('Sending File {} to Exe Extractor'.format(self.file_path))
                 elif magic_mime in self.mime_no_macro:
                         logger.info('NonMacro File {} mime {}'.format(self.file_path, magic_mime))
                 else:
