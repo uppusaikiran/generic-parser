@@ -256,6 +256,22 @@ def main():
 	else:
 		logger.info('Not able to extract PE on file {} .. Exiting'.format('/home/ransom/exe_example'))
 
+def test(filename):
+	peExtractor = PEFeatureExtractor(filename)
+        peExtractor.extractor()
+        peStatus = peExtractor.check_for_pe_success()
+        if peStatus:
+                peExtractor.extract_features()
+                peExtractor.put_pe_features()
+                peExtractor.put_rare_features()
+                peExtractor.createFeatureDict()
+                peExtractor.pe_sections()
+                peExtractor.pe_mapping_section()
+                print json.dumps(peExtractor.get_pe_features(),sort_keys=True, indent=4)
+                print json.dumps(peExtractor.get_rare_features(),sort_keys=True, indent=4)
+        else:
+                logger.info('Not able to extract PE on file {} .. Exiting'.format(filename))
+
 
 if __name__ == '__main__':
 	main()

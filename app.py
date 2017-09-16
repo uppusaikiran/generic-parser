@@ -3,6 +3,7 @@
 from src import generic , custom_logger
 import time 
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -15,7 +16,7 @@ logger.addHandler(handler)
 
 def main():
 	logger.info('Starting Main Process at {}'.format(time.time()))
-	gen_obj = generic.GenericParser('/home/ransom/9a66eef3511daf5cc2954d7ae0fc93e6920f4d0ce565b6df7438899598711e99')
+	gen_obj = generic.GenericParser(sys.argv[1])
 	gen_obj.check_mime()
 
 if __name__ == '__main__':

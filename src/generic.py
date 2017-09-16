@@ -12,6 +12,7 @@ import time
 import json
 import os
 import magic
+from pe_parser import PEFeatureExtractor , test
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -56,7 +57,7 @@ class GenericParser:
                         ".pdf": ["application/pdf", "application/x-pdf", "application/acrobat", "application/vnd.pdf", "text/pdf", "text/x-pdf"]
                 }
 		self.mime_executable = {
-			".exe" : ["application/octet-stream", "application/x-msdownload", "application/exe", "application/x-exe", "application/dos-exe", "vms/exe", "application/x-winexe", "application/msdos-windows", "application/x-msdos-program"]
+			".exe" : ["application/x-dosexec","application/octet-stream", "application/x-msdownload", "application/exe", "application/x-exe", "application/dos-exe", "vms/exe", "application/x-winexe", "application/msdos-windows", "application/x-msdos-program"]
 		}
                 self.mime_compressed = {}
                 self.mime_packed = {}
@@ -79,6 +80,7 @@ class GenericParser:
                         logger.info('Packed File {} mime {}'.format(self.file_path, magic_mime))
 		elif magic_mime in self.mime_executable['.exe'][0]:
                         logger.info('Executable File {} mime {}'.format(self.file_path, magic_mime))
+			test(self.file_path)	
 			logger.info('Sending File {} to Exe Extractor'.format(self.file_path))
                 elif magic_mime in self.mime_no_macro:
                         logger.info('NonMacro File {} mime {}'.format(self.file_path, magic_mime))
