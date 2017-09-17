@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
-from src import generic , custom_logger
+from src import generic 
 import time 
 import logging
 import sys
+import json
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -18,6 +19,7 @@ def main():
 	logger.info('Starting Main Process at {}'.format(time.time()))
 	gen_obj = generic.GenericParser(sys.argv[1])
 	gen_obj.check_mime()
-
+	gen_obj.filemeta()
+	print json.dumps(gen_obj.file_meta,indent=4,sort_keys=True)
 if __name__ == '__main__':
 	main()

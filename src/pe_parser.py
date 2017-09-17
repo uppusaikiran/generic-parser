@@ -267,8 +267,12 @@ def test(filename):
                 peExtractor.createFeatureDict()
                 peExtractor.pe_sections()
                 peExtractor.pe_mapping_section()
-                print json.dumps(peExtractor.get_pe_features(),sort_keys=True, indent=4)
-                print json.dumps(peExtractor.get_rare_features(),sort_keys=True, indent=4)
+                #print json.dumps(peExtractor.get_pe_features(),sort_keys=True, indent=4)
+                #print json.dumps(peExtractor.get_rare_features(),sort_keys=True, indent=4)
+		pe_features = {}
+		pe_features['pe_features'] = peExtractor.get_pe_features()
+		pe_features['pe_rare_features'] = peExtractor.get_rare_features()
+		return pe_features
         else:
                 logger.info('Not able to extract PE on file {} .. Exiting'.format(filename))
 
