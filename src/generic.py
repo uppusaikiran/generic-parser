@@ -16,6 +16,7 @@ from pe_parser import PEFeatureExtractor , test
 from pdf_parser import PDFFeatureExtractor , pdf_test
 import hashlib
 from yara_match import YaraClass
+import math
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -92,12 +93,25 @@ class GenericParser:
                                  hash_sha256.update(chunk)
                 return hash_sha256.hexdigest()
 	def entropy(self,fname):
-		with open(fname,'rb') as e:
-			data = e.read()
-			if not data:
-				return 0
-			else:
-				return 1
+		f = open(fname ,"rb")
+		byteArr = map(ord, f.read())
+		f.close()
+		fileSize = len(byteArr)
+		#print fileSize
+		freqList = []
+		for b in range(256):
+    			ctr = 0
+    			for byte in byteArr:
+        			if byte == b:
+            				ctr += 1
+    		freqList.append(float(ctr) / fileSize)
+		# Shannon entropy
+		ent = 0.0
+		for freq in freqList:
+    			if freq > 0:
+        			ent = ent + freq * math.log(freq, 2)
+		ent = -ent
+		return ent
 	def file_size(self,fname):
 		return os.path.getsize(fname)
 	def get_stat(self):
@@ -124,7 +138,8 @@ class GenericParser:
 		self.file_meta['magic_buffer']  = self.magic_buffer
 		self.file_meta['mime'] 		= self.magic_mime
 		self.file_meta['macro'] 	= self.macro
-		self.file_meta['entropy'] 	= 0
+		self.file_meta['entropy'] 	= self.entropy(self.file_path)
+		self.file_meta['min_possible_file_size'] = self.file_meta['entropy'] * self.file_size(self.file_path)
 		self.file_meta['size'] 		= self.file_size(self.file_path)
 	def yara_match(self):
 		self.file_meta['yara'] = []
