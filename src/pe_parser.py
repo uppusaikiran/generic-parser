@@ -23,6 +23,8 @@ class PEFeatureExtractor():
 		self.pe_feature_default = 0
 		self.pe_section_status = 1
 		self.pe_md5 = ''
+		self.anti_vm = []
+		self.anti_dbg = []
 		self.import_symbol_count = 0
 		self.export_symbol_count = 0
 		self.bound_import_symbol_count = 0
@@ -41,7 +43,26 @@ class PEFeatureExtractor():
         		for chunk in iter(lambda: f.read(4096), b""):
         			hash_md5.update(chunk)
     		return hash_md5.hexdigest()
+	def antiVM_detector(self, fname):
 		
+		vm_signatures =  {
+        		"Red Pill":"\x0f\x01\x0d\x00\x00\x00\x00\xc3",
+        		"VirtualPc trick":"\x0f\x3f\x07\x0b",
+        		"VMware trick":"VMXh",
+        		"VMCheck.dll":"\x45\xC7\x00\x01",
+        		"VMCheck.dll for VirtualPC":"\x0f\x3f\x07\x0b\xc7\x45\xfc\xff\xff\xff\xff",
+        		"Xen":"XenVMM",
+        		"Bochs & QEmu CPUID Trick":"\x44\x4d\x41\x63",
+        		"Torpig VMM Trick": "\xE8\xED\xFF\xFF\xFF\x25\x00\x00\x00\xFF\x33\xC9\x3D\x00\x00\x00\x80\x0F\x95\xC1\x8B\xC1\xC3",
+        		"Torpig (UPX) VMM Trick": "\x51\x51\x0F\x01\x27\x00\xC1\xFB\xB5\xD5\x35\x02\xE2\xC3\xD1\x66\x25\x32\xBD\x83\x7F\xB7\x4E\x3D\x06\x80\x0F\x95\xC1\x8B\xC1\xC3"
+          		}
+		# Reading file in Binary
+		with open(fname ,'rb') as f:
+			curr_buff = f.read()
+			for vm_sig in vm_signatures:
+				present = curr_buff.find(vm_signatures[vm_sig])
+				if present > -1:
+					  self.anti_vm.append("0x%x %s" % (present, vm_sig))
 	def extractor(self):
 		logger.info('Features for PE file {} being extracted'.format(self.filepath))
 		self.pe_md5 = self.md5(self.filepath)
@@ -105,6 +126,7 @@ class PEFeatureExtractor():
 			self.pe_sections.append(sec)
 	def pe_mapping_section(self):
 		try:
+			self.pe_features['anti_debugging_capabilities'] = self.anti_dbg
 			#Initial Assignment
 			self.rare_features['section_names'] = []
 			for each_sec in self.pe_success.sections:
@@ -221,6 +243,17 @@ class PEFeatureExtractor():
 				self.pe_features['sec_vasize_%s' % secname] = sec.Misc_VirtualSize	
 				self.pe_features['sec_va_execsize'] = self.rawexecsize
 				self.pe_features['sec_raw_execsize'] = self.vaexecsize
+			self.pe_features['anti_vm_capabilities'] = self.anti_vm
+			
+			# Extracting anti debug capabilities
+			anti_dbg_signatures = ['CheckRemoteDebuggerPresent', 'FindWindow', 'GetWindowThreadProcessId', 'IsDebuggerPresent', 'OutputDebugString', 'Process32First', 'Process32Next', 'TerminateProcess',  'UnhandledExceptionFilter', 'ZwQueryInformation']
+			for entry in pe_success.DIRECTORY_ENTRY_IMPORT:			
+				 for imp in entry.imports:
+            				if (imp.name != None) and (imp.name != ""):
+                				for anti in anti_dbg_signatures:
+                    					if imp.name.startswith(anti):
+                        					self.anti_dbg.append("%s %s" % (hex(imp.address),imp.name))
+			self.pe_features['anti_debugging_capabilities'] = self.anti_dbg	
 		except Exception as e:
 			logger.error('Error in mapping pe section headers for {} {}'.format(self.filepath, str(e)))
 	def convertToAsciiNullTerm(self , name):
@@ -264,6 +297,7 @@ def test(filename):
                 peExtractor.extract_features()
                 peExtractor.put_pe_features()
                 peExtractor.put_rare_features()
+		peExtractor.antiVM_detector(filename)
                 peExtractor.createFeatureDict()
                 peExtractor.pe_sections()
                 peExtractor.pe_mapping_section()
