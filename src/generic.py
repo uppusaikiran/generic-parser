@@ -138,6 +138,7 @@ class GenericParser:
                 	#print a
                         #print str(a)
                         final.append(str(a))
+		final = list(set(final))
 		self.file_meta['yara'] = final
         def check_mime(self):
                 logger.info('GenericParser on file {} starts at {}'.format(self.file_path, time.time()))
