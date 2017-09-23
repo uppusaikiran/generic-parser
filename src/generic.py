@@ -15,6 +15,7 @@ import magic
 from pe_parser import PEFeatureExtractor , test
 from pdf_parser import PDFFeatureExtractor , pdf_test
 import hashlib
+from yara_match import YaraClass
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -99,6 +100,19 @@ class GenericParser:
 				return 1
 	def file_size(self,fname):
 		return os.path.getsize(fname)
+	def get_stat(self):
+		
+		file_stats = os.stat(self.file_path)
+		self.file_meta['protection_bytes'] = file_stats[0]
+		self.file_meta['inode_number'] = file_stats[1]
+		self.file_meta['device'] = file_stats[2]
+		self.file_meta['no_of_hard_links'] = file_stats[3]
+		self.file_meta['user_id_of_owner'] = file_stats[4]
+		self.file_meta['group_id_of_owner'] = file_stats[5]
+		self.file_meta['access_time'] = file_stats[7]
+		self.file_meta['modification_time'] = file_stats[8]
+		self.file_meta['meta_data_change_time'] = file_stats[9]
+		return file_stats
 				
 	def filemeta(self):
 		self.file_meta['file_path'] 	= self.file_path
@@ -112,6 +126,19 @@ class GenericParser:
 		self.file_meta['macro'] 	= self.macro
 		self.file_meta['entropy'] 	= 0
 		self.file_meta['size'] 		= self.file_size(self.file_path)
+	def yara_match(self):
+		self.file_meta['yara'] = []
+		ys = YaraClass('src/rules/','.', True , self.file_path)
+                ys.compile()
+                #ys.scan_all()
+                result = ys.scan_single(self.file_path)
+                #print result
+                final = []
+                for a in result:
+                	#print a
+                        #print str(a)
+                        final.append(str(a))
+		self.file_meta['yara'] = final
         def check_mime(self):
                 logger.info('GenericParser on file {} starts at {}'.format(self.file_path, time.time()))
                 self.magic_info = magic.from_file(self.file_path)
@@ -150,7 +177,8 @@ def parser():
         parser = GenericParser(file_path)
         parser.check_mime()
 	parser.filemeta()
-	
+	stats = parser.get_stat(file_path)	
+	print stats
 
 def main():
         print 'This is intended for module purpose only'

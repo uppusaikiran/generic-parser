@@ -20,6 +20,8 @@ def main():
 	gen_obj = generic.GenericParser(sys.argv[1])
 	gen_obj.check_mime()
 	gen_obj.filemeta()
+	gen_obj.yara_match()
+	gen_obj.get_stat()
 	print json.dumps(gen_obj.file_meta,indent=4,sort_keys=True)
 if __name__ == '__main__':
 	main()
