@@ -17,6 +17,7 @@ from pdf_parser import PDFFeatureExtractor , pdf_test
 import hashlib
 from yara_match import YaraClass
 import math
+from office_parser import OfficeParser
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -170,6 +171,9 @@ class GenericParser:
                 #print self.magic_mime
                 if self.magic_mime in self.mime_with_macro_office.values():
                         logger.info('Office File {} mime {}'.format(self.file_path, self.magic_mime))
+			obj = OfficeParser(self.file_path)
+			results =  obj.analysis()
+			self.file_meta['features'] = results
                         logger.info('Sending File to office_extractor')
                 elif self.magic_mime in self.mime_with_macro_pdf.values()[0]:
                         logger.info('Pdf File {} mime {}'.format(self.file_path, self.magic_mime))
