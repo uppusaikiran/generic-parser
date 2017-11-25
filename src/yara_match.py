@@ -64,7 +64,7 @@ class YaraClass:
             self.yara_dir = arg_yara_dir
             self.file_path = arg_file
         except Exception as e:
-            print "Init Exception: {}".format(e)
+            logger.error("Init Exception: {}".format(e))
 
     def compile(self):
         """
@@ -82,7 +82,7 @@ class YaraClass:
                             all_rules[file] = rule_case
             self.rules = yara.compile(filepaths=all_rules)
         except Exception as e:
-            print "Compile Exception: {}".format(e)
+            logger.error("Compile Exception: {}".format(e))
 
     def test_rule(self, test_case):
         """
@@ -107,7 +107,7 @@ class YaraClass:
                     self.scan(work_file)
                     self.check_unpack(work_file)
         except Exception as e:
-            print "Scan Exception: {} for file {}".format(e, work_file)
+            logger.error("Scan Exception: {} for file {}".format(e, work_file))
     def scan_single(self, scan_file):
         """
         Scan method to scan a user submitted file
@@ -119,7 +119,7 @@ class YaraClass:
             #self.check_unpack(work_file)
         except Exception as e:
             return []
-            print 'Scan Exception {} for file {}'.format(e, work_file)
+            logger.error('Scan Exception {} for file {}'.format(e, work_file))
 
     def scan(self, scan_file):
         """
@@ -128,11 +128,11 @@ class YaraClass:
         try:
             matches = self.rules.match(scan_file)
             return matches
-            print "{}\n{}\n".format(scan_file, matches)
+            #print "{}\n{}\n".format(scan_file, matches)
 
         except Exception as e:
             return []
-            print "Scan Exception: {}".format(e)
+            logger.error("Scan Exception: {}".format(e))
 
     def check_unpack(self, work_file):
         fc = self.FileClass(work_file)
@@ -158,7 +158,7 @@ class YaraClass:
                         self.scan(check_unpack_file)
                 fc.rm_tmp_dir()
             except Exception as e:
-                print "Check Unpack Loop Exception: {}".format(e)
+                logger.error("Check Unpack Loop Exception: {}".format(e))
 
 
     class FileClass:
@@ -206,17 +206,17 @@ class YaraClass:
                     self.pe = True
 
             except Exception as e:
-                print "Check Magic Exception: {}".format(e)
+                logger.error("Check Magic Exception: {}".format(e))
 
         def unzip(self):
             try:
                 self.mk_tmp_dir()
-                print "Unzipping {}".format(self.file)
+                logger.info("Unzipping {}".format(self.file))
                 with zipfile.ZipFile(self.file) as zf_file:
                     zf_file.setpassword("infected")
                     zf_file.extractall(self.tmp_dir)
             except Exception as e:
-                print "Unzip Exception: {}".format(e)
+                logger.error("Unzip Exception: {}".format(e))
 
         def get_macro(self):
             """
@@ -224,14 +224,14 @@ class YaraClass:
             """
             try:
                 self.mk_tmp_dir()
-                print "Getting Macros from {}".format(self.file)
+                logger.info("Getting Macros from {}".format(self.file))
                 vb = VBA_Parser(self.file, relaxed=True)
                 if vb.detect_vba_macros():
                     with open("{}{}macros.txt".format(self.tmp_dir, os.sep), "w") as macro_file:
                         for (subfilename, stream_path, vba_filename, vba_code) in vb.extract_all_macros():
                             macro_file.write(vba_code)
             except Exception as e:
-                print "get_macro Exception: {}".format(e)
+                logger.error("get_macro Exception: {}".format(e))
 
         def unrar_file(self):
             """
@@ -239,11 +239,11 @@ class YaraClass:
             """
             try:
                 self.mk_tmp_dir()
-                print "Unraring file from {}".format(self.file)
+                logger.info("Unraring file from {}".format(self.file))
                 rf = rarfile.RarFile(self.file)
                 rf.extractall(self.tmp_dir)
             except Exception as e:
-                print "unrar Exception: {}".format(e)
+                logger.error("unrar Exception: {}".format(e))
 
         def pe_unpack(self):
             """
@@ -251,14 +251,13 @@ class YaraClass:
             """
             try:
                 self.mk_tmp_dir()
-                print "Unpacking PE from {}".format(self.file)
+                logger.info("Unpacking PE from {}".format(self.file))
                 subprocess.call(["upx", "-d", "{}".format(self.file), "-o", "{}{}upx_unpacked".format(self.tmp_dir, os.sep)], stderr=subprocess.STDOUT)
             except Exception as e:
-                print "PE Unpacking Exception {}".format(e)
+                logger.error("PE Unpacking Exception {}".format(e))
 
 def main():
     args = parse_arguments().parse_args()
-
     ys = YaraClass(args.yara_dir, args.scan_dir, args.verbose , args.scan_file)
     ys.compile()
     #ys.scan_all()

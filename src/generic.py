@@ -71,7 +71,13 @@ class GenericParser:
                 self.mime_compressed = {}
                 self.mime_packed = {}
                 self.mime_no_macro = {}
-	
+		self.mime_web = {
+			".htm" : "text/html",
+			".html": "text/html",
+			".swf" : "application/x-shockwave-flash",
+			".jar" : "application/java-archive"
+
+		}
 	def md5_hash(self,fname):
     		hash_md5 = hashlib.md5()
     		with open(fname, "rb") as f:
@@ -141,6 +147,7 @@ class GenericParser:
 		self.file_meta['entropy'] 	= self.entropy(self.file_path)
 		self.file_meta['min_possible_file_size'] = self.file_meta['entropy'] * self.file_size(self.file_path)
 		self.file_meta['size'] 		= self.file_size(self.file_path)
+		self.file_meta['file_size_not_multiple_8'] =  self.file_meta['size'] % 8 
 	def yara_match(self):
 		self.file_meta['yara'] = []
 		ys = YaraClass('src/rules/','.', True , self.file_path)
@@ -182,7 +189,10 @@ class GenericParser:
 			self.pe_features = test(self.file_path)	
 			self.file_meta['features'] = self.pe_features
 			logger.info('Sending File {} to Exe Extractor'.format(self.file_path))
-                elif self.magic_mime in self.mime_no_macro:
+                elif self.magic_mime in self.mime_web.values():
+			logger.info('Web File {} mime {}'.format(self.file_path, self.magic_mime))
+			
+		elif self.magic_mime in self.mime_no_macro:
                         logger.info('NonMacro File {} mime {}'.format(self.file_path, self.magic_mime))
                 else:
 			self.macro = 0

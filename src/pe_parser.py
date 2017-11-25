@@ -4,6 +4,7 @@ import logging
 import sys
 import hashlib
 import json
+import datetime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -25,6 +26,8 @@ class PEFeatureExtractor():
 		self.pe_md5 = ''
 		self.anti_vm = []
 		self.anti_dbg = []
+		self.embeded_files = []
+		self.urls = []
 		self.import_symbol_count = 0
 		self.export_symbol_count = 0
 		self.bound_import_symbol_count = 0
@@ -254,6 +257,7 @@ class PEFeatureExtractor():
                     					if imp.name.startswith(anti):
                         					self.anti_dbg.append("%s %s" % (hex(imp.address),imp.name))
 			self.pe_features['anti_debugging_capabilities'] = self.anti_dbg	
+			self.pe_features['compile_time'] = datetime.datetime.fromtimestamp(pe_success.FILE_HEADER.TimeDateStamp)
 		except Exception as e:
 			logger.error('Error in mapping pe section headers for {} {}'.format(self.filepath, str(e)))
 	def convertToAsciiNullTerm(self , name):
