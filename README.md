@@ -3,7 +3,8 @@ A Single Library Parser to extract meta information,static analysis and detect m
 
 ## Usage:
 
-```python app.py -h
+```
+python app.py -h
 usage: app.py [-h] -f PATH [-s STORE] -y YARA -e EXTRACT [--version]
 
 optional arguments:
