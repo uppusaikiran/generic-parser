@@ -4,20 +4,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler('logs/generic.log')
-handler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+#handler = logging.FileHandler('logs/generic.log')
+#handler.setLevel(logging.INFO)
+#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#handler.setFormatter(formatter)
+#logger.addHandler(handler)
 
 
 class MyHTMLParser(HTMLParser):
 	
-    def handle_starttag(self, tag, attrs):
-        print "Start tag:", tag
-        for attr in attrs:
-            print("     attr:", attr)
 
+    def handle_starttag(self, tag, attrs):
+	meta = {}
+	meta['start_tag'] = []
+        print "Start tag:", tag
+	meta['start_tag'].append(tag)
+        for attr in attrs:
+	    meta['start_tag'][tag] = []
+	    meta['start_tag'][tag].append(attr)	    
+            print("     attr:", attr)
+	print meta
     def handle_endtag(self, tag):
         print("End tag  :", tag)
 
@@ -41,7 +47,7 @@ class MyHTMLParser(HTMLParser):
     def handle_decl(self, data):
         print("Decl     :", data)
     
-
+  
 class WebParser():
 	"""
 	Find if any hidden exploits or macros hidden
@@ -70,8 +76,12 @@ class WebParser():
 				html_data = f.read()
 				parser = MyHTMLParser()
 				parser.feed(html_data)
+				
 		except Exception as e:
-			logger.error('Error : Parsing HTML FILE {}'.format(str(e)))		
-
-web = WebParser()
-web.html_parser(sys.argv[1])
+			print str(e)
+			#logger.error('Error : Parsing HTML FILE {}'.format(str(e)))		
+def main():
+	web = WebParser()
+	web.html_parser(sys.argv[1])
+if __name__ :
+	main()
