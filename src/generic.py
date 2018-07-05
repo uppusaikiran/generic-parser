@@ -16,6 +16,8 @@ from pe_parser import PEFeatureExtractor , test
 from pdf_parser import PDFFeatureExtractor , pdf_test
 import hashlib
 from yara_match import YaraClass
+import math
+from office_parser import OfficeParser
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -70,7 +72,13 @@ class GenericParser:
                 self.mime_compressed = {}
                 self.mime_packed = {}
                 self.mime_no_macro = {}
-	
+		self.mime_web = {
+			".htm" : "text/html",
+			".html": "text/html",
+			".swf" : "application/x-shockwave-flash",
+			".jar" : "application/java-archive"
+
+		}
 	def md5_hash(self,fname):
     		hash_md5 = hashlib.md5()
     		with open(fname, "rb") as f:
@@ -92,12 +100,25 @@ class GenericParser:
                                  hash_sha256.update(chunk)
                 return hash_sha256.hexdigest()
 	def entropy(self,fname):
-		with open(fname,'rb') as e:
-			data = e.read()
-			if not data:
-				return 0
-			else:
-				return 1
+		f = open(fname ,"rb")
+		byteArr = map(ord, f.read())
+		f.close()
+		fileSize = len(byteArr)
+		#print fileSize
+		freqList = []
+		for b in range(256):
+    			ctr = 0
+    			for byte in byteArr:
+        			if byte == b:
+            				ctr += 1
+    		freqList.append(float(ctr) / fileSize)
+		# Shannon entropy
+		ent = 0.0
+		for freq in freqList:
+    			if freq > 0:
+        			ent = ent + freq * math.log(freq, 2)
+		ent = -ent
+		return ent
 	def file_size(self,fname):
 		return os.path.getsize(fname)
 	def get_stat(self):
@@ -124,8 +145,10 @@ class GenericParser:
 		self.file_meta['magic_buffer']  = self.magic_buffer
 		self.file_meta['mime'] 		= self.magic_mime
 		self.file_meta['macro'] 	= self.macro
-		self.file_meta['entropy'] 	= 0
+		self.file_meta['entropy'] 	= self.entropy(self.file_path)
+		self.file_meta['min_possible_file_size'] = self.file_meta['entropy'] * self.file_size(self.file_path)
 		self.file_meta['size'] 		= self.file_size(self.file_path)
+		self.file_meta['file_size_not_multiple_8'] =  self.file_meta['size'] % 8 
 	def yara_match(self):
 		self.file_meta['yara'] = []
 		ys = YaraClass('src/rules/','.', True , self.file_path)
@@ -138,6 +161,7 @@ class GenericParser:
                 	#print a
                         #print str(a)
                         final.append(str(a))
+		final = list(set(final))
 		self.file_meta['yara'] = final
         def check_mime(self):
                 logger.info('GenericParser on file {} starts at {}'.format(self.file_path, time.time()))
@@ -147,6 +171,9 @@ class GenericParser:
                 #print self.magic_mime
                 if self.magic_mime in self.mime_with_macro_office.values():
                         logger.info('Office File {} mime {}'.format(self.file_path, self.magic_mime))
+			obj = OfficeParser(self.file_path)
+			results =  obj.analysis()
+			self.file_meta['features'] = results
                         logger.info('Sending File to office_extractor')
                 elif self.magic_mime in self.mime_with_macro_pdf.values()[0]:
                         logger.info('Pdf File {} mime {}'.format(self.file_path, self.magic_mime))
@@ -166,7 +193,10 @@ class GenericParser:
 			self.pe_features = test(self.file_path)	
 			self.file_meta['features'] = self.pe_features
 			logger.info('Sending File {} to Exe Extractor'.format(self.file_path))
-                elif self.magic_mime in self.mime_no_macro:
+                elif self.magic_mime in self.mime_web.values():
+			logger.info('Web File {} mime {}'.format(self.file_path, self.magic_mime))
+			
+		elif self.magic_mime in self.mime_no_macro:
                         logger.info('NonMacro File {} mime {}'.format(self.file_path, self.magic_mime))
                 else:
 			self.macro = 0
