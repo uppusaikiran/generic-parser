@@ -1,5 +1,6 @@
 # Generic Parser for Analyzing Malware Files to Detect Suspicious Behaviour.
-A Single Library Parser to extract meta information, static analysis and detect macros within files.
+
+A Single Library Parser to extract meta information,static analysis and detect macros within the files.
 
 # Usage:
 
